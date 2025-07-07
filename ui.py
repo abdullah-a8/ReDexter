@@ -1,15 +1,14 @@
 import os
-import subprocess
-import configparser
+from typing import Optional, TYPE_CHECKING
 
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QPushButton, QFileDialog, QMessageBox, QComboBox, QFormLayout, QInputDialog,
-    QProgressDialog, QStyle, QGraphicsOpacityEffect, QToolButton, QGroupBox,
-    QFrame, QSizePolicy, QSpacerItem, QScrollArea
+    QPushButton, QFileDialog, QMessageBox, QComboBox, QInputDialog,
+    QProgressDialog, QToolButton, QGroupBox,
+    QFrame, QScrollArea
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QPropertyAnimation, QSize, QEasingCurve, QParallelAnimationGroup, QPoint
-from PyQt6.QtGui import QIcon, QFont, QPixmap, QPainter, QColor
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QPropertyAnimation, QEasingCurve, QPoint
+from PyQt6.QtGui import QFont, QResizeEvent
 
 import qtawesome as qta
 
@@ -17,6 +16,9 @@ from themes import THEMES, original_dark, DARK_MODE_COLORS, CATPPUCCIN_COLORS, D
 from drag_drop_listwidget import DragDropListWidget
 from crypto import make_key, decrypt_file
 from config_utils import load_rclone_config, get_crypt_remotes
+
+if TYPE_CHECKING:
+    from typing import cast
 
 class DecryptionWorker(QThread):
     progress_update = pyqtSignal(int)   # Emits progress percentage
@@ -48,11 +50,18 @@ class DecryptionWorker(QThread):
         self._is_interrupted = True
 
 class ModernSidebar(QFrame):
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional['MainWindow'] = None):
         super().__init__(parent)
         self.setFixedWidth(280)
         self.setObjectName("sidebar")
         self.setup_ui()
+
+    def get_main_window(self) -> Optional['MainWindow']:
+        """Get the parent MainWindow with proper type"""
+        if TYPE_CHECKING:
+            from typing import cast
+            return cast('MainWindow', self.parent()) if self.parent() else None
+        return self.parent()
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
@@ -67,9 +76,11 @@ class ModernSidebar(QFrame):
         
         # Settings label
         settings_label = QLabel("Settings")
+        settings_label.setObjectName("sectionTitle")
         font = settings_label.font()
-        font.setPointSize(16)
-        font.setBold(True)
+        font.setFamily("Inter")
+        font.setPointSize(24)
+        font.setWeight(QFont.Weight.Bold)
         settings_label.setFont(font)
         
         header_layout.addWidget(settings_label)
@@ -117,14 +128,17 @@ class ModernSidebar(QFrame):
         # Load config button
         self.load_config_btn = QPushButton("Load rclone Config")
         self.load_config_btn.setIcon(qta.icon('fa5s.folder-open'))
-        self.load_config_btn.clicked.connect(self.parent().load_config_action)
+        main_window = self.get_main_window()
+        if main_window:
+            self.load_config_btn.clicked.connect(main_window.load_config_action)
         self.load_config_btn.setObjectName("secondaryButton")
         config_controls.addWidget(self.load_config_btn)
         
         # Remove config button
         self.remove_config_btn = QPushButton("Remove Config")
         self.remove_config_btn.setIcon(qta.icon('fa5s.trash-alt'))
-        self.remove_config_btn.clicked.connect(self.parent().remove_config_action)
+        if main_window:
+            self.remove_config_btn.clicked.connect(main_window.remove_config_action)
         self.remove_config_btn.setObjectName("secondaryButton")
         config_controls.addWidget(self.remove_config_btn)
         
@@ -144,7 +158,8 @@ class ModernSidebar(QFrame):
         remote_layout.addWidget(remote_label)
         
         self.crypt_combobox = QComboBox()
-        self.crypt_combobox.currentTextChanged.connect(self.parent().populate_credentials_from_config)
+        if main_window:
+            self.crypt_combobox.currentTextChanged.connect(main_window.populate_credentials_from_config)
         remote_layout.addWidget(self.crypt_combobox)
         
         config_controls.addLayout(remote_layout)
@@ -174,7 +189,8 @@ class ModernSidebar(QFrame):
         self.password_toggle_button = QToolButton()
         self.password_toggle_button.setCheckable(True)
         self.password_toggle_button.setIcon(qta.icon('fa5s.eye-slash'))
-        self.password_toggle_button.clicked.connect(self.parent().toggle_password_visibility)
+        if main_window:
+            self.password_toggle_button.clicked.connect(main_window.toggle_password_visibility)
         
         pwd_container.addWidget(self.password_lineedit)
         pwd_container.addWidget(self.password_toggle_button)
@@ -199,7 +215,8 @@ class ModernSidebar(QFrame):
         self.salt_toggle_button = QToolButton()
         self.salt_toggle_button.setCheckable(True)
         self.salt_toggle_button.setIcon(qta.icon('fa5s.eye-slash'))
-        self.salt_toggle_button.clicked.connect(self.parent().toggle_salt_visibility)
+        if main_window:
+            self.salt_toggle_button.clicked.connect(main_window.toggle_salt_visibility)
         
         salt_container.addWidget(self.salt_lineedit)
         salt_container.addWidget(self.salt_toggle_button)
@@ -228,7 +245,9 @@ class ModernSidebar(QFrame):
         self.theme_combobox = QComboBox()
         self.theme_combobox.addItems(list(THEMES.keys()))
         self.theme_combobox.setCurrentText("Dark Mode")  # Set default to match main.py
-        self.theme_combobox.currentTextChanged.connect(self.parent().change_theme)
+        main_window = self.get_main_window()
+        if main_window:
+            self.theme_combobox.currentTextChanged.connect(main_window.change_theme)
         theme_layout.addWidget(self.theme_combobox)
         
         layout.addLayout(theme_layout)
@@ -236,9 +255,16 @@ class ModernSidebar(QFrame):
         return section
 
 class ModernMainContent(QFrame):
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional['MainWindow'] = None):
         super().__init__(parent)
         self.setup_ui()
+
+    def get_main_window(self) -> Optional['MainWindow']:
+        """Get the parent MainWindow with proper type"""
+        if TYPE_CHECKING:
+            from typing import cast
+            return cast('MainWindow', self.parent()) if self.parent() else None
+        return self.parent()
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
@@ -262,10 +288,11 @@ class ModernMainContent(QFrame):
         
         # Main title
         title_label = QLabel("ReDexter")
+        title_label.setObjectName("mainTitle")
         title_font = title_label.font()
         title_font.setFamily("Inter")
-        title_font.setPointSize(20)
-        title_font.setWeight(QFont.Weight.Medium)
+        title_font.setPointSize(32)
+        title_font.setWeight(QFont.Weight.Bold)
         title_label.setFont(title_font)
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header_layout.addWidget(title_label)
@@ -274,7 +301,7 @@ class ModernMainContent(QFrame):
         subtitle_label = QLabel("Decrypt your rclone files with ease")
         subtitle_font = subtitle_label.font()
         subtitle_font.setFamily("Inter")
-        subtitle_font.setPointSize(12)
+        subtitle_font.setPointSize(14)
         subtitle_font.setWeight(QFont.Weight.Normal)
         subtitle_label.setFont(subtitle_font)
         subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -316,9 +343,10 @@ class ModernMainContent(QFrame):
         
         # Primary text
         primary_text = QLabel("Drag & drop your files here")
+        primary_text.setObjectName("primaryText")
         primary_font = primary_text.font()
         primary_font.setFamily("Inter")
-        primary_font.setPointSize(14)
+        primary_font.setPointSize(16)
         primary_font.setWeight(QFont.Weight.Medium)
         primary_text.setFont(primary_font)
         primary_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -338,7 +366,9 @@ class ModernMainContent(QFrame):
         # Browse button
         browse_btn = QPushButton("Browse Files")
         browse_btn.setIcon(qta.icon('fa5s.folder-open'))
-        browse_btn.clicked.connect(self.parent().select_input_files)
+        main_window = self.get_main_window()
+        if main_window:
+            browse_btn.clicked.connect(main_window.select_input_files)
         browse_btn.setObjectName("primaryButton")
         drop_layout.addWidget(browse_btn, alignment=Qt.AlignmentFlag.AlignCenter)
         
@@ -368,9 +398,10 @@ class ModernMainContent(QFrame):
         self._files_icon = files_icon
         
         files_title = QLabel("Selected Files")
+        files_title.setObjectName("sectionSubtitle")
         files_title_font = files_title.font()
         files_title_font.setFamily("Inter")
-        files_title_font.setPointSize(12)
+        files_title_font.setPointSize(14)
         files_title_font.setWeight(QFont.Weight.Medium)
         files_title.setFont(files_title_font)
         files_header_layout.addWidget(files_title)
@@ -403,6 +434,8 @@ class ModernMainContent(QFrame):
         actions_layout.setContentsMargins(0, 0, 0, 0)
         actions_layout.setSpacing(16)
         
+        main_window = self.get_main_window()
+        
         # Output folder section
         output_section = QGroupBox("Output Folder")
         output_layout = QVBoxLayout(output_section)
@@ -418,7 +451,8 @@ class ModernMainContent(QFrame):
         
         select_folder_btn = QPushButton("Choose Folder")
         select_folder_btn.setIcon(qta.icon('fa5s.folder'))
-        select_folder_btn.clicked.connect(self.parent().select_destination)
+        if main_window:
+            select_folder_btn.clicked.connect(main_window.select_destination)
         select_folder_btn.setObjectName("secondaryButton")
         
         # Store reference for theme updates
@@ -433,7 +467,8 @@ class ModernMainContent(QFrame):
         # Decrypt button
         self.decrypt_btn = QPushButton("Start Decryption")
         self.decrypt_btn.setIcon(qta.icon('fa5s.unlock'))
-        self.decrypt_btn.clicked.connect(self.parent().decrypt_action)
+        if main_window:
+            self.decrypt_btn.clicked.connect(main_window.decrypt_action)
         self.decrypt_btn.setObjectName("primaryButton")
         self.decrypt_btn.setProperty("buttonType", "large")
         actions_layout.addWidget(self.decrypt_btn)
@@ -539,9 +574,9 @@ class ModernSidebarToggle(QPushButton):
         self.position_animation.setEndValue(target_pos)
         self.position_animation.start()
     
-    def resizeEvent(self, event):
+    def resizeEvent(self, a0: Optional[QResizeEvent]):
         """Ensure button stays on top when parent resizes"""
-        super().resizeEvent(event)
+        super().resizeEvent(a0)
         self.raise_()
     
     def update_position_for_sidebar_state(self):
@@ -599,9 +634,9 @@ class MainWindow(QMainWindow):
         self.main_content.files_listwidget.itemChanged.connect(self.update_files_count)
         self.main_content.files_listwidget.filesAdded.connect(self.update_files_count)
     
-    def resizeEvent(self, event):
+    def resizeEvent(self, a0: Optional[QResizeEvent]):
         """Handle window resize events to maintain toggle button positioning"""
-        super().resizeEvent(event)
+        super().resizeEvent(a0)
         # Ensure toggle button stays on top and in correct position
         if hasattr(self, 'sidebar_toggle'):
             self.sidebar_toggle.raise_()
@@ -739,7 +774,11 @@ class MainWindow(QMainWindow):
             self.update_files_count()
 
     def decrypt_action(self):
-        files = [self.main_content.files_listwidget.item(i).text() for i in range(self.main_content.files_listwidget.count())]
+        files = []
+        for i in range(self.main_content.files_listwidget.count()):
+            item = self.main_content.files_listwidget.item(i)
+            if item is not None:
+                files.append(item.text())
         password = self.sidebar.password_lineedit.text().strip()
         salt_text = self.sidebar.salt_lineedit.text().strip()
         salt = salt_text if salt_text else None

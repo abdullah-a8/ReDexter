@@ -1,6 +1,7 @@
+from typing import Optional
 from PyQt6.QtWidgets import QListWidget
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QDragEnterEvent, QDropEvent
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent
 
 class DragDropListWidget(QListWidget):
     filesAdded = pyqtSignal()  # Signal emitted when files are added
@@ -10,25 +11,31 @@ class DragDropListWidget(QListWidget):
         self.setAcceptDrops(True)
         self.setDragEnabled(True)
 
-    def dragEnterEvent(self, event: QDragEnterEvent):
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-        else:
-            super().dragEnterEvent(event)
+    def dragEnterEvent(self, e: Optional[QDragEnterEvent]):
+        if e is not None:
+            mime_data = e.mimeData()
+            if mime_data is not None and mime_data.hasUrls():
+                e.acceptProposedAction()
+                return
+        super().dragEnterEvent(e)
 
-    def dragMoveEvent(self, event: QDragEnterEvent):
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-        else:
-            super().dragMoveEvent(event)
+    def dragMoveEvent(self, e: Optional[QDragMoveEvent]):
+        if e is not None:
+            mime_data = e.mimeData()
+            if mime_data is not None and mime_data.hasUrls():
+                e.acceptProposedAction()
+                return
+        super().dragMoveEvent(e)
 
-    def dropEvent(self, event: QDropEvent):
-        if event.mimeData().hasUrls():
-            for url in event.mimeData().urls():
-                file_path = url.toLocalFile()
-                if file_path:
-                    self.addItem(file_path)
-            event.acceptProposedAction()
-            self.filesAdded.emit()  # Emit signal after adding files
-        else:
-            super().dropEvent(event)
+    def dropEvent(self, event: Optional[QDropEvent]):
+        if event is not None:
+            mime_data = event.mimeData()
+            if mime_data is not None and mime_data.hasUrls():
+                for url in mime_data.urls():
+                    file_path = url.toLocalFile()
+                    if file_path:
+                        self.addItem(file_path)
+                event.acceptProposedAction()
+                self.filesAdded.emit()  # Emit signal after adding files
+                return
+        super().dropEvent(event)

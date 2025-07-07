@@ -35,10 +35,42 @@ QLabel {{
     font-weight: 450;
 }}
 
+/* Main Title (H1) */
+QLabel[objectName="mainTitle"] {{
+    color: {colors['text_primary']};
+    font-size: 32pt;
+    font-weight: 700;
+    font-family: 'Inter', 'SF Pro Display', 'Segoe UI Variable', 'Roboto', sans-serif;
+}}
+
+/* Section Title (H1 Secondary) */
+QLabel[objectName="sectionTitle"] {{
+    color: {colors['text_primary']};
+    font-size: 24pt;
+    font-weight: 700;
+    font-family: 'Inter', 'SF Pro Display', 'Segoe UI Variable', 'Roboto', sans-serif;
+}}
+
+/* Primary Text (H2) */
+QLabel[objectName="primaryText"] {{
+    color: {colors['text_primary']};
+    font-size: 16pt;
+    font-weight: 500;
+    font-family: 'Inter', 'SF Pro Display', 'Segoe UI Variable', 'Roboto', sans-serif;
+}}
+
+/* Section Subtitle (H3) */
+QLabel[objectName="sectionSubtitle"] {{
+    color: {colors['text_primary']};
+    font-size: 14pt;
+    font-weight: 500;
+    font-family: 'Inter', 'SF Pro Display', 'Segoe UI Variable', 'Roboto', sans-serif;
+}}
+
 /* Subtitle Text */
 QLabel[objectName="subtitleText"] {{
     color: {colors['text_muted']};
-    font-size: 12pt;
+    font-size: 14pt;
     font-weight: 400;
 }}
 
@@ -258,17 +290,14 @@ QPushButton[objectName="sidebarToggle"] {{
     max-width: 44px;
     max-height: 44px;
     color: {colors['text_on_accent']};
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
 }}
 
 QPushButton[objectName="sidebarToggle"]:hover {{
     background-color: {colors['accent_hover']};
-    transform: scale(1.05);
 }}
 
 QPushButton[objectName="sidebarToggle"]:pressed {{
     background-color: {colors['accent_pressed']};
-    transform: scale(0.95);
 }}
 
 /* Frame Styling */

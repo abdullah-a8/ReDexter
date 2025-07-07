@@ -3,7 +3,6 @@ import base64
 import hashlib
 
 import nacl.secret
-import nacl.utils
 import nacl.pwhash
 from Crypto.Cipher import AES
 
