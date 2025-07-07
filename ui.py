@@ -13,7 +13,7 @@ from PyQt6.QtGui import QIcon, QFont, QPixmap, QPainter, QColor
 
 import qtawesome as qta
 
-from themes import THEMES, original_dark
+from themes import THEMES, original_dark, DARK_MODE_COLORS, CATPPUCCIN_COLORS, DRACULA_COLORS, TRUE_BLACK_COLORS
 from drag_drop_listwidget import DragDropListWidget
 from crypto import make_key, decrypt_file
 from config_utils import load_rclone_config, get_crypt_remotes
@@ -116,14 +116,16 @@ class ModernSidebar(QFrame):
         
         # Load config button
         self.load_config_btn = QPushButton("Load rclone Config")
-        self.load_config_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogOpenButton))
+        self.load_config_btn.setIcon(qta.icon('fa5s.folder-open'))
         self.load_config_btn.clicked.connect(self.parent().load_config_action)
+        self.load_config_btn.setObjectName("secondaryButton")
         config_controls.addWidget(self.load_config_btn)
         
         # Remove config button
         self.remove_config_btn = QPushButton("Remove Config")
-        self.remove_config_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogCancelButton))
+        self.remove_config_btn.setIcon(qta.icon('fa5s.trash-alt'))
         self.remove_config_btn.clicked.connect(self.parent().remove_config_action)
+        self.remove_config_btn.setObjectName("secondaryButton")
         config_controls.addWidget(self.remove_config_btn)
         
         # Config status
@@ -276,7 +278,7 @@ class ModernMainContent(QFrame):
         subtitle_font.setWeight(QFont.Weight.Normal)
         subtitle_label.setFont(subtitle_font)
         subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        subtitle_label.setStyleSheet("color: rgba(136, 136, 136, 1);")
+        subtitle_label.setObjectName("subtitleText")
         header_layout.addWidget(subtitle_label)
         
         parent_layout.addWidget(header_container)
@@ -284,31 +286,33 @@ class ModernMainContent(QFrame):
     def create_modern_file_drop_area(self, parent_layout):
         # Main container for the drop area
         drop_container = QFrame()
-        drop_container.setStyleSheet("""
-            QFrame {
-                background-color: transparent;
-                border: 1px dashed rgba(203, 213, 224, 0.8);
-                border-radius: 8px;
-                padding: 0px;
-            }
-            QFrame:hover {
-                border-color: rgba(59, 130, 246, 0.6);
-            }
-        """)
+        drop_container.setObjectName("dropContainer")
         drop_container.setMinimumHeight(200)
         drop_container.setMaximumHeight(200)
         
         # Main layout for drop area
         drop_layout = QVBoxLayout(drop_container)
-        drop_layout.setContentsMargins(24, 24, 24, 24)
-        drop_layout.setSpacing(12)
+        drop_layout.setContentsMargins(32, 32, 32, 32)
+        drop_layout.setSpacing(16)
         drop_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        # Upload icon
+        # Upload icon container to ensure proper spacing
+        icon_container = QWidget()
+        icon_container.setFixedSize(48, 48)
+        icon_layout = QVBoxLayout(icon_container)
+        icon_layout.setContentsMargins(0, 0, 0, 0)
+        icon_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
         upload_icon = QLabel()
-        upload_icon.setPixmap(qta.icon('fa5s.cloud-upload-alt', color='#9CA3AF').pixmap(32, 32))
+        upload_icon.setPixmap(qta.icon('fa5s.cloud-upload-alt').pixmap(40, 40))
         upload_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        drop_layout.addWidget(upload_icon)
+        upload_icon.setObjectName("iconLabel")
+        icon_layout.addWidget(upload_icon)
+        
+        # Store reference for theme updates
+        self._upload_icon = upload_icon
+        
+        drop_layout.addWidget(icon_container, alignment=Qt.AlignmentFlag.AlignCenter)
         
         # Primary text
         primary_text = QLabel("Drag & drop your files here")
@@ -328,34 +332,18 @@ class ModernMainContent(QFrame):
         secondary_font.setWeight(QFont.Weight.Normal)
         secondary_text.setFont(secondary_font)
         secondary_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        secondary_text.setStyleSheet("color: rgba(107, 114, 128, 1);")
+        secondary_text.setObjectName("mutedText")
         drop_layout.addWidget(secondary_text)
         
         # Browse button
         browse_btn = QPushButton("Browse Files")
-        browse_btn.setIcon(qta.icon('fa5s.folder-open', color='white'))
+        browse_btn.setIcon(qta.icon('fa5s.folder-open'))
         browse_btn.clicked.connect(self.parent().select_input_files)
-        browse_btn.setStyleSheet("""
-            QPushButton {
-                background-color: rgba(59, 130, 246, 1);
-                border: none;
-                color: white;
-                padding: 8px 16px;
-                border-radius: 6px;
-                font-size: 12pt;
-                font-weight: 500;
-                min-width: 100px;
-                min-height: 32px;
-                max-height: 32px;
-            }
-            QPushButton:hover {
-                background-color: rgba(37, 99, 235, 1);
-            }
-            QPushButton:pressed {
-                background-color: rgba(29, 78, 216, 1);
-            }
-        """)
+        browse_btn.setObjectName("primaryButton")
         drop_layout.addWidget(browse_btn, alignment=Qt.AlignmentFlag.AlignCenter)
+        
+        # Store reference for theme updates
+        self._browse_btn = browse_btn
         
         parent_layout.addWidget(drop_container)
         
@@ -372,8 +360,12 @@ class ModernMainContent(QFrame):
         files_header_layout.setSpacing(6)
         
         files_icon = QLabel()
-        files_icon.setPixmap(qta.icon('fa5s.file-alt', color='#6B7280').pixmap(16, 16))
+        files_icon.setPixmap(qta.icon('fa5s.file-alt').pixmap(16, 16))
+        files_icon.setObjectName("iconLabel")
         files_header_layout.addWidget(files_icon)
+        
+        # Store reference for theme updates
+        self._files_icon = files_icon
         
         files_title = QLabel("Selected Files")
         files_title_font = files_title.font()
@@ -392,7 +384,7 @@ class ModernMainContent(QFrame):
         count_font.setPointSize(11)
         count_font.setWeight(QFont.Weight.Normal)
         self.files_count_label.setFont(count_font)
-        self.files_count_label.setStyleSheet("color: rgba(107, 114, 128, 1);")
+        self.files_count_label.setObjectName("mutedText")
         files_header_layout.addWidget(self.files_count_label)
         
         files_layout.addWidget(files_header)
@@ -400,27 +392,6 @@ class ModernMainContent(QFrame):
         # File list widget
         self.files_listwidget = DragDropListWidget()
         self.files_listwidget.setMaximumHeight(100)
-        self.files_listwidget.setStyleSheet("""
-            QListWidget {
-                background-color: transparent;
-                border: 1px solid rgba(229, 231, 235, 0.8);
-                border-radius: 6px;
-                padding: 4px;
-                font-size: 11pt;
-            }
-            QListWidget::item {
-                padding: 6px 8px;
-                border-radius: 4px;
-                margin: 1px 0px;
-            }
-            QListWidget::item:hover {
-                background-color: rgba(243, 244, 246, 0.8);
-            }
-            QListWidget::item:selected {
-                background-color: rgba(59, 130, 246, 0.1);
-                color: rgba(59, 130, 246, 1);
-            }
-        """)
         files_layout.addWidget(self.files_listwidget)
         
         parent_layout.addWidget(files_section)
@@ -434,23 +405,6 @@ class ModernMainContent(QFrame):
         
         # Output folder section
         output_section = QGroupBox("Output Folder")
-        output_section.setStyleSheet("""
-            QGroupBox {
-                font-size: 12pt;
-                font-weight: 500;
-                border: 1px solid rgba(229, 231, 235, 0.8);
-                border-radius: 6px;
-                margin-top: 8px;
-                padding-top: 12px;
-                background-color: transparent;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 12px;
-                padding: 0 6px 0 6px;
-                font-weight: 500;
-            }
-        """)
         output_layout = QVBoxLayout(output_section)
         output_layout.setContentsMargins(12, 12, 12, 12)
         output_layout.setSpacing(8)
@@ -461,49 +415,14 @@ class ModernMainContent(QFrame):
         
         self.dest_dir_lineedit = QLineEdit()
         self.dest_dir_lineedit.setPlaceholderText("Leave empty to use same folder as input files")
-        self.dest_dir_lineedit.setStyleSheet("""
-            QLineEdit {
-                background-color: transparent;
-                border: 1px solid rgba(209, 213, 219, 0.8);
-                border-radius: 4px;
-                padding: 6px 8px;
-                font-size: 11pt;
-                min-height: 24px;
-                max-height: 24px;
-            }
-            QLineEdit:focus {
-                border-color: rgba(59, 130, 246, 1);
-                outline: none;
-            }
-            QLineEdit::placeholder {
-                color: rgba(156, 163, 175, 1);
-            }
-        """)
         
         select_folder_btn = QPushButton("Choose Folder")
-        select_folder_btn.setIcon(qta.icon('fa5s.folder', color='#6B7280'))
+        select_folder_btn.setIcon(qta.icon('fa5s.folder'))
         select_folder_btn.clicked.connect(self.parent().select_destination)
-        select_folder_btn.setStyleSheet("""
-            QPushButton {
-                background-color: transparent;
-                border: 1px solid rgba(209, 213, 219, 0.8);
-                color: rgba(55, 65, 81, 1);
-                padding: 6px 12px;
-                border-radius: 4px;
-                font-size: 11pt;
-                font-weight: 500;
-                min-width: 100px;
-                min-height: 24px;
-                max-height: 24px;
-            }
-            QPushButton:hover {
-                background-color: rgba(243, 244, 246, 0.8);
-                border-color: rgba(156, 163, 175, 1);
-            }
-            QPushButton:pressed {
-                background-color: rgba(229, 231, 235, 0.8);
-            }
-        """)
+        select_folder_btn.setObjectName("secondaryButton")
+        
+        # Store reference for theme updates
+        self._select_folder_btn = select_folder_btn
         
         output_container.addWidget(self.dest_dir_lineedit)
         output_container.addWidget(select_folder_btn)
@@ -513,31 +432,10 @@ class ModernMainContent(QFrame):
         
         # Decrypt button
         self.decrypt_btn = QPushButton("Start Decryption")
-        self.decrypt_btn.setIcon(qta.icon('fa5s.unlock', color='white'))
+        self.decrypt_btn.setIcon(qta.icon('fa5s.unlock'))
         self.decrypt_btn.clicked.connect(self.parent().decrypt_action)
-        self.decrypt_btn.setStyleSheet("""
-            QPushButton {
-                background-color: rgba(59, 130, 246, 1);
-                border: none;
-                color: white;
-                padding: 12px 24px;
-                border-radius: 6px;
-                font-size: 13pt;
-                font-weight: 500;
-                min-height: 40px;
-                max-height: 40px;
-            }
-            QPushButton:hover {
-                background-color: rgba(37, 99, 235, 1);
-            }
-            QPushButton:pressed {
-                background-color: rgba(29, 78, 216, 1);
-            }
-            QPushButton:disabled {
-                background-color: rgba(156, 163, 175, 1);
-                color: rgba(255, 255, 255, 0.8);
-            }
-        """)
+        self.decrypt_btn.setObjectName("primaryButton")
+        self.decrypt_btn.setProperty("buttonType", "large")
         actions_layout.addWidget(self.decrypt_btn)
         
         parent_layout.addWidget(actions_container)
@@ -556,7 +454,7 @@ class ModernSidebarToggle(QPushButton):
         # Set initial position (top-left when closed)
         self.move(16, 16)
         
-        # Initialize with hamburger icon
+        # Initialize with hamburger icon (will be updated with proper color later)
         self.update_icon()
         
         # Animation setup
@@ -584,6 +482,15 @@ class ModernSidebarToggle(QPushButton):
             # Hamburger icon when closed  
             self.setIcon(qta.icon('fa5s.bars'))
     
+    def update_icon_with_color(self, color):
+        """Update icon with specific color based on sidebar state"""
+        if self.is_sidebar_open:
+            # X icon when open
+            self.setIcon(qta.icon('fa5s.times', color=color))
+        else:
+            # Hamburger icon when closed  
+            self.setIcon(qta.icon('fa5s.bars', color=color))
+    
     def toggle_sidebar(self):
         """Toggle sidebar and animate button position"""
         if not self.main_window:
@@ -603,7 +510,11 @@ class ModernSidebarToggle(QPushButton):
     def animate_to_open_position(self):
         """Animate button to position inside opened sidebar"""
         self.is_sidebar_open = True
-        self.update_icon()
+        # Use colored icon update if main window has theme colors
+        if self.main_window and hasattr(self.main_window, 'current_theme_colors'):
+            self.update_icon_with_color(self.main_window.current_theme_colors['text_on_accent'])
+        else:
+            self.update_icon()
         
         # Position at right edge of sidebar (280px width - 44px button width - 16px margin)
         target_pos = QPoint(220, 16)  # Inside sidebar at top-right
@@ -615,7 +526,11 @@ class ModernSidebarToggle(QPushButton):
     def animate_to_closed_position(self):
         """Animate button to position at left edge when sidebar is closed"""
         self.is_sidebar_open = False
-        self.update_icon()
+        # Use colored icon update if main window has theme colors
+        if self.main_window and hasattr(self.main_window, 'current_theme_colors'):
+            self.update_icon_with_color(self.main_window.current_theme_colors['text_on_accent'])
+        else:
+            self.update_icon()
         
         # Position at left edge of main window
         target_pos = QPoint(16, 16)
@@ -648,10 +563,14 @@ class MainWindow(QMainWindow):
         self.dest_dir = None
         self.worker = None  # To hold the decryption thread
         self.current_animation = None  # Keep a reference to the current animation
+        self.current_theme_colors = DARK_MODE_COLORS  # Track current theme colors
         
         self.setup_ui()
         self.load_last_config()
         self.update_files_count()
+        
+        # Initialize icon colors with default theme
+        self.update_icon_colors()
 
     def setup_ui(self):
         # Main container
@@ -863,22 +782,108 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Success", "Decryption completed successfully.")
         self.worker = None
 
+    def get_theme_colors(self, theme):
+        """Get color scheme for the given theme"""
+        theme_color_map = {
+            "Dark Mode": DARK_MODE_COLORS,
+            "Catppuccin Mocha": CATPPUCCIN_COLORS,
+            "Dracula": DRACULA_COLORS,
+            "True Black": TRUE_BLACK_COLORS,
+        }
+        return theme_color_map.get(theme, DARK_MODE_COLORS)
+    
+    def update_icon_colors(self):
+        """Update all icon colors based on current theme"""
+        colors = self.current_theme_colors
+        
+        # Update main content icons
+        if hasattr(self.main_content, 'files_listwidget'):
+            # Update cloud upload icon
+            if hasattr(self.main_content, '_upload_icon'):
+                self.main_content._upload_icon.setPixmap(
+                    qta.icon('fa5s.cloud-upload-alt', color=colors['text_muted']).pixmap(40, 40)
+                )
+            
+            # Update file icon
+            if hasattr(self.main_content, '_files_icon'):
+                self.main_content._files_icon.setPixmap(
+                    qta.icon('fa5s.file-alt', color=colors['text_muted']).pixmap(16, 16)
+                )
+        
+        # Update button icons
+        if hasattr(self.main_content, 'decrypt_btn'):
+            self.main_content.decrypt_btn.setIcon(
+                qta.icon('fa5s.unlock', color=colors['text_on_accent'])
+            )
+        
+        # Update browse button icon
+        if hasattr(self.main_content, '_browse_btn'):
+            self.main_content._browse_btn.setIcon(
+                qta.icon('fa5s.folder-open', color=colors['text_on_accent'])
+            )
+        
+        # Update choose folder button icon  
+        if hasattr(self.main_content, '_select_folder_btn'):
+            self.main_content._select_folder_btn.setIcon(
+                qta.icon('fa5s.folder', color=colors['text_primary'])
+            )
+        
+        # Update sidebar toggle icon
+        if hasattr(self, 'sidebar_toggle'):
+            self.sidebar_toggle.update_icon_with_color(colors['text_on_accent'])
+        
+        # Update sidebar button icons
+        if hasattr(self.sidebar, 'load_config_btn'):
+            self.sidebar.load_config_btn.setIcon(
+                qta.icon('fa5s.folder-open', color=colors['text_primary'])
+            )
+        
+        if hasattr(self.sidebar, 'remove_config_btn'):
+            self.sidebar.remove_config_btn.setIcon(
+                qta.icon('fa5s.trash-alt', color=colors['text_primary'])
+            )
+        
+        # Update password/salt toggle icons
+        if hasattr(self.sidebar, 'password_toggle_button'):
+            if self.sidebar.password_toggle_button.isChecked():
+                self.sidebar.password_toggle_button.setIcon(
+                    qta.icon('fa5s.eye', color=colors['text_primary'])
+                )
+            else:
+                self.sidebar.password_toggle_button.setIcon(
+                    qta.icon('fa5s.eye-slash', color=colors['text_primary'])
+                )
+        
+        if hasattr(self.sidebar, 'salt_toggle_button'):
+            if self.sidebar.salt_toggle_button.isChecked():
+                self.sidebar.salt_toggle_button.setIcon(
+                    qta.icon('fa5s.eye', color=colors['text_primary'])
+                )
+            else:
+                self.sidebar.salt_toggle_button.setIcon(
+                    qta.icon('fa5s.eye-slash', color=colors['text_primary'])
+                )
+
     def change_theme(self, theme):
+        self.current_theme_colors = self.get_theme_colors(theme)
         stylesheet = THEMES.get(theme, original_dark)
         self.setStyleSheet(stylesheet)
+        self.update_icon_colors()
 
     def toggle_password_visibility(self):
+        color = self.current_theme_colors['text_primary']
         if self.sidebar.password_toggle_button.isChecked():
             self.sidebar.password_lineedit.setEchoMode(QLineEdit.EchoMode.Normal)
-            self.sidebar.password_toggle_button.setIcon(qta.icon('fa5s.eye'))
+            self.sidebar.password_toggle_button.setIcon(qta.icon('fa5s.eye', color=color))
         else:
             self.sidebar.password_lineedit.setEchoMode(QLineEdit.EchoMode.Password)
-            self.sidebar.password_toggle_button.setIcon(qta.icon('fa5s.eye-slash'))
+            self.sidebar.password_toggle_button.setIcon(qta.icon('fa5s.eye-slash', color=color))
 
     def toggle_salt_visibility(self):
+        color = self.current_theme_colors['text_primary']
         if self.sidebar.salt_toggle_button.isChecked():
             self.sidebar.salt_lineedit.setEchoMode(QLineEdit.EchoMode.Normal)
-            self.sidebar.salt_toggle_button.setIcon(qta.icon('fa5s.eye'))
+            self.sidebar.salt_toggle_button.setIcon(qta.icon('fa5s.eye', color=color))
         else:
             self.sidebar.salt_lineedit.setEchoMode(QLineEdit.EchoMode.Password)
-            self.sidebar.salt_toggle_button.setIcon(qta.icon('fa5s.eye-slash'))
+            self.sidebar.salt_toggle_button.setIcon(qta.icon('fa5s.eye-slash', color=color))

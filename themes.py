@@ -35,6 +35,25 @@ QLabel {{
     font-weight: 450;
 }}
 
+/* Subtitle Text */
+QLabel[objectName="subtitleText"] {{
+    color: {colors['text_muted']};
+    font-size: 12pt;
+    font-weight: 400;
+}}
+
+/* Muted Text */
+QLabel[objectName="mutedText"] {{
+    color: {colors['text_muted']};
+    font-size: 11pt;
+    font-weight: 400;
+}}
+
+/* Icon Labels */
+QLabel[objectName="iconLabel"] {{
+    color: {colors['text_muted']};
+}}
+
 /* Input Fields */
 QLineEdit, QListWidget {{
     background-color: {colors['bg_secondary']};
@@ -55,6 +74,28 @@ QLineEdit:focus, QListWidget:focus {{
 QLineEdit::placeholder {{
     color: {colors['text_muted']};
     font-style: italic;
+}}
+
+/* List Widget Items */
+QListWidget::item {{
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 2px 0px;
+    background-color: transparent;
+}}
+
+QListWidget::item:hover {{
+    background-color: {colors['hover']};
+}}
+
+QListWidget::item:selected {{
+    background-color: {colors['accent']};
+    color: {colors['text_on_accent']};
+    font-weight: 500;
+}}
+
+QListWidget::item:selected:hover {{
+    background-color: {colors['accent_hover']};
 }}
 
 /* Button Styling */
@@ -78,6 +119,68 @@ QPushButton:pressed {{
 }}
 
 QPushButton:disabled {{
+    background-color: {colors['disabled']};
+    color: {colors['text_muted']};
+}}
+
+/* Primary Button Styling */
+QPushButton[objectName="primaryButton"] {{
+    background-color: {colors['accent']};
+    border: none;
+    color: {colors['text_on_accent']};
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 12pt;
+    font-weight: 500;
+    min-height: 36px;
+    min-width: 120px;
+}}
+
+QPushButton[objectName="primaryButton"]:hover {{
+    background-color: {colors['accent_hover']};
+}}
+
+QPushButton[objectName="primaryButton"]:pressed {{
+    background-color: {colors['accent_pressed']};
+}}
+
+QPushButton[objectName="primaryButton"]:disabled {{
+    background-color: {colors['disabled']};
+    color: {colors['text_muted']};
+}}
+
+/* Large Primary Button */
+QPushButton[objectName="primaryButton"][buttonType="large"] {{
+    padding: 14px 28px;
+    font-size: 13pt;
+    font-weight: 600;
+    min-height: 48px;
+    min-width: 160px;
+}}
+
+/* Secondary Button Styling */
+QPushButton[objectName="secondaryButton"] {{
+    background-color: {colors['bg_secondary']};
+    border: 1px solid {colors['border']};
+    color: {colors['text_primary']};
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 11pt;
+    font-weight: 500;
+    min-height: 32px;
+    min-width: 100px;
+}}
+
+QPushButton[objectName="secondaryButton"]:hover {{
+    background-color: {colors['hover']};
+    border-color: {colors['accent']};
+}}
+
+QPushButton[objectName="secondaryButton"]:pressed {{
+    background-color: {colors['pressed']};
+}}
+
+QPushButton[objectName="secondaryButton"]:disabled {{
     background-color: {colors['disabled']};
     color: {colors['text_muted']};
 }}
@@ -172,6 +275,21 @@ QPushButton[objectName="sidebarToggle"]:pressed {{
 QFrame {{
     border: none;
     border-radius: 8px;
+}}
+
+/* Drop Container Styling */
+QFrame[objectName="dropContainer"] {{
+    background-color: rgba(0, 0, 0, 0.02);
+    border: 2px dashed {colors['border']};
+    border-radius: 12px;
+    padding: 0px;
+    margin: 8px 0px;
+}}
+
+QFrame[objectName="dropContainer"]:hover {{
+    border-color: {colors['accent']};
+    background-color: {colors['bg_secondary']};
+    border-style: solid;
 }}
 
 /* Sidebar specific styling */
@@ -380,3 +498,6 @@ THEMES = {
 
 # Default theme for imports
 original_dark = dark_mode
+
+# Export color schemes for dynamic icon updates
+__all__ = ['THEMES', 'original_dark', 'DARK_MODE_COLORS', 'CATPPUCCIN_COLORS', 'DRACULA_COLORS', 'TRUE_BLACK_COLORS']
